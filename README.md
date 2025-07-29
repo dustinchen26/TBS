@@ -57,3 +57,20 @@ TBS = 8 * 41 * ceil((344064 + 24) / (8 * 41)) - 24 = 344376 bits
 TBS = 344376 bits = 43047.00 bytes
 Throughput = 344376 * 20 * 100 = 688752000 bps = 656.85 Mbps
 ```
+
+## Ref
+```
+https://5g-tools.com/5g-nr-tbs-transport-block-size-calculator/
+Enter the MCS index:9
+v(j)Layers:4
+Nprb:273
+Subcarrier Spacing (µ): µ:30kHz
+Select a 5G NR table from 38.214: 5.1.3.1-2
+Number of scheduled OFDM symbols: 13
+Number of RE for DM-RS per PRB: 24
+Overhead configured by higher layer: 0
+
+計算結果:
+5G NR TBS (Transport block size)344376 bits/8=43047 bytes
+Calculated Throughput Max (Mbps)688.752 Mbps
+```
