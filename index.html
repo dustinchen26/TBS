@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>5G NR TBS Calculator (38.214 Section 5.1.3.2)</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+    .container { max-width: 700px; }
+    .input-group { display: flex; align-items: center; margin-bottom: 10px; }
+    .input-group label { flex: 1; font-weight: bold; }
+    .input-group input, .input-group select { flex: 1; padding: 5px; }
+    button { padding: 5px 10px; margin-top: 10px; }
+    #details { margin-top: 20px; padding: 10px; background: #f9f9f9; border: 1px solid #ccc; white-space: pre-wrap; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>5G NR Transport Block Size (TBS) Calculator</h2>
+	<p style="margin: 0;">Author: Dustin_Chen, email: <a href="mailto:Dustin_Chen@compal.com" style="line-height: 1;">Dustin_Chen@compal.com</a> or <a href="mailto:chuhpsdustin@gmail.com" style="line-height: 1;">chuhpsdustin@gmail.com</a></p>
+    <br>
+	
+    <div class="input-group">
+      <label for="nPrb">Number of PRBs (n<sub>PRB</sub>):</label>
+      <input type="number" id="nPrb" value="4" min="1">
+    </div>
+
+    <div class="input-group">
+      <label for="nSymb">Number of Symbols (N<sub>symb</sub>):</label>
+      <input type="number" id="nSymb" value="13" min="1">
+    </div>
+
+    <div class="input-group">
+      <label for="dmrsRe">Number of REs for DMRS per PRB:</label>
+      <input type="number" id="dmrsRe" value="12" min="0">
+    </div>
+
+    <div class="input-group">
+      <label for="xoh">xOverhead (REs per PRB):</label>
+      <input type="number" id="xoh" value="0" min="0">
+    </div>
+
+    <div class="input-group">
+      <label for="mcsTable">MCS Table:</label>
+      <select id="mcsTable">
+        <option value="1">64-QAM</option>
+        <option value="2" selected>256-QAM</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label for="mcsIndex">MCS Index (0~27):</label>
+      <input type="number" id="mcsIndex" value="20" min="0" max="27">
+    </div>
+
+    <div class="input-group">
+      <label for="layers">Number of Layers (v):</label>
+      <input type="number" id="layers" value="4" min="1">
+    </div>
+
+    <button onclick="calculateTBS()">Calculate TBS</button>
+
+    <h3>Result:</h3>
+    <div id="result">-</div>
+
+    <h3>Calculation Details:</h3>
+    <div id="details">-</div>
+  </div>
+
+  <script>
+    function resolveMCS(I_mcs, tbl_no) {
+      const tbl1 = [
+        [2,120,0.2344],[2,157,0.3066],[2,193,0.3770],[2,251,0.4902],[2,308,0.6016],[2,379,0.7402],[2,449,0.8770],[2,526,1.0273],[2,602,1.1758],[2,679,1.3262],
+        [4,340,1.3281],[4,378,1.4766],[4,434,1.6953],[4,490,1.9141],[4,553,2.1602],[4,616,2.4063],[4,658,2.5703],[6,438,2.5664],[6,466,2.7305],[6,517,3.0293],
+        [6,567,3.3223],[6,616,3.6094],[6,666,3.9023],[6,719,4.2129],[6,772,4.5234],[6,822,4.8164],[6,873,5.1152],[6,910,5.3320],[6,948,5.5547]
+      ];
+      const tbl2 = [
+        [2,120,0.2344],[2,193,0.3770],[2,308,0.6016],[2,449,0.8770],[2,602,1.1758],[4,378,1.4766],[4,434,1.6953],[4,490,1.9141],[4,553,2.1602],[4,616,2.4063],
+        [4,658,2.5703],[6,466,2.7305],[6,517,3.0293],[6,567,3.3223],[6,616,3.6094],[6,666,3.9023],[6,719,4.2129],[6,772,4.5234],[6,822,4.8164],[6,873,5.1152],
+        [8,682.5,5.3320],[8,711,5.5547],[8,754,5.8906],[8,797,6.2266],[8,841,6.5703],[8,885,6.9141],[8,916.5,7.1602],[8,948,7.4063]
+      ];
+      const tbl = (tbl_no === 1) ? tbl1 : tbl2;
+      const [Qm, Rint, se] = tbl[I_mcs];
+      return [Qm, Rint / 1024, se];
+    }
+
+    function log2(x) {
+      return Math.log(x) / Math.log(2);
+    }
+
+    function calculateTBS() {
+      const NofSlotsPerRadioFrame = 20;
+      const NofRadioFramePerSec = 100;
+
+      const nPrb = parseInt(document.getElementById("nPrb").value);
+      const nSymb = parseInt(document.getElementById("nSymb").value);
+      const dmrsRe = parseInt(document.getElementById("dmrsRe").value);
+      const xoh = parseInt(document.getElementById("xoh").value);
+      const mcsTable = parseInt(document.getElementById("mcsTable").value);
+      const mcsIndex = parseInt(document.getElementById("mcsIndex").value);
+      const layers = parseInt(document.getElementById("layers").value);
+
+      const [Qm, R, se] = resolveMCS(mcsIndex, mcsTable);
+
+      let detail = `Resolved MCS: Qm = ${Qm}, R = ${R.toFixed(4)}, SE = ${se.toFixed(4)}\n`;
+
+      const NREp = 12 * nSymb - dmrsRe - xoh;
+      const NREbar = Math.min(156, NREp);
+      const NRE = NREbar * nPrb;
+      const Ninfo = NRE * R * Qm * layers;
+
+      detail += `NRE' = 12 * ${nSymb} - ${dmrsRe} - ${xoh} = ${NREp}\n`;
+      detail += `NRĒ = min(156, ${NREp}) = ${NREbar}\n`;
+      detail += `NRE = ${NREbar} * ${nPrb} = ${NRE}\n`;
+      detail += `Ninfo = ${NRE} * ${R.toFixed(4)} * ${Qm} * ${layers} = ${Ninfo.toFixed(2)}\n`;
+
+      let TBS_bits = 0;
+
+      if (Ninfo <= 3824) {
+        const n = Math.max(3, Math.floor(log2(Ninfo)) - 6);
+        const Ninfo_quant = Math.max(24, Math.pow(2, n) * Math.floor(Ninfo / Math.pow(2, n)));
+        TBS_bits = Ninfo_quant;
+        detail += `Ninfo <= 3824 → use Table 5.1.3.2-1 quantization\n`;
+        detail += `n = max(3, floor(log2(${Ninfo})) - 6) = ${n}\n`;
+        detail += `TBS = max(24, 2^${n} * floor(${Ninfo} / 2^${n})) = ${TBS_bits} bits\n`;
+      } else {
+        const n = Math.floor(log2(Ninfo - 24)) - 5;
+        const Ninfo_prime = Math.pow(2, n) * Math.round((Ninfo - 24) / Math.pow(2, n));
+        detail += `Ninfo > 3824 → LDPC-based block segmentation\n`;
+        detail += `n = floor(log2(${Ninfo} - 24)) - 5 = ${n}\n`;
+        detail += `Ninfo' = 2^${n} * round((${Ninfo} - 24)/2^${n}) = ${Ninfo_prime}\n`;
+
+        let C = 1;
+        if (R <= 0.25) {
+          C = Math.ceil((Ninfo_prime + 24) / 3816);
+        } else if (Ninfo_prime > 8424) {
+          C = Math.ceil((Ninfo_prime + 24) / 8424);
+        }
+
+        TBS_bits = 8 * C * Math.ceil((Ninfo_prime + 24) / (8 * C)) - 24;
+        detail += `C = ${C}\n`;
+        detail += `TBS = 8 * ${C} * ceil((${Ninfo_prime} + 24) / (8 * ${C})) - 24 = ${TBS_bits} bits\n`;
+      }
+
+      const TP_bps = TBS_bits * NofSlotsPerRadioFrame * NofRadioFramePerSec;
+      const TP_Mbps = TP_bps / (1024 * 1024);
+      const TBS_bytes = TBS_bits / 8;
+
+      detail += `TBS = ${TBS_bits} bits = ${TBS_bytes.toFixed(2)} bytes\n`;
+      detail += `Throughput = ${TBS_bits} * ${NofSlotsPerRadioFrame} * ${NofRadioFramePerSec} = ${TP_bps} bps = ${TP_Mbps.toFixed(2)} Mbps\n`;
+
+      document.getElementById("result").innerText = `TBS = ${TBS_bits} bits\nTBS = ${TBS_bytes.toFixed(2)} bytes\nThroughput = ${TP_Mbps.toFixed(2)} Mbps`;
+      document.getElementById("details").innerText = detail;
+    }
+  </script>
+</body>
+</html>
