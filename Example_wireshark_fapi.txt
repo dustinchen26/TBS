@@ -13,12 +13,10 @@
                 First DMRS Position: 2 (PDSCH mapping type A)●
 
 這代表：
-👉 使用 Type 1 DMRS，每個 PRB 每個 symbol 會佔用 6 個 RE
 👉 Mapping Type A 時，第一個 DMRS 位置是 symbol 2 ●
 👉 AdditionalPosition = 1 表示額外使用 symbol 3	●
 👉 共使用 2 個 symbol 當作 DMRS（symbol 2 與 3）●
-👉 每個 symbol 扣除 6 RE/PRB → 共 6 * 2 = 12 RE/PRB（這就是你目前 HTML 預設填入的 dmrsRe = 12）
-👉 DMRS 的 RE 分佈在全 PRB 的 12 個子載波上, 共使用 2 個 symbol 當作 DMRS
+👉 DMRS 的 RE 分佈在全 PRB 的 12 個子載波上, 共使用 2 個 symbol 當作 DMRS●
 
 Number of PRBs (nPRB):273●
 Number of Symbols (Nsymb):13●
